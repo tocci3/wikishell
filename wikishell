@@ -1,0 +1,78 @@
+#!/bin/bash
+
+function usage() {
+    echo -e "Usage: "
+    echo -e "  $0 [Options] <word>"
+    echo -e ""
+    echo -e "Options:"
+    echo -e "  -j, --japanese   use japanese api"
+    echo -e "  -h, --help       display help"
+}
+
+url="https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=xml&titles="
+ja_flag=0
+
+for OPT in $*
+do
+    case $OPT in
+        '-j' | '--japanese')
+            url="https://ja.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=xml&titles="
+            ja_flag=1
+            ;;
+        '-h' | '--help')
+            usage
+            exit 0
+            ;;
+        -*)
+            echo -e "Invalid option '${OPT}'" 1>&2
+            usage
+            exit 1
+            ;;
+        *)
+            word="$1"
+            ;; 
+    esac
+    shift
+done
+
+if [[ -z "$word" ]]; then
+    usage
+    exit 1
+fi
+
+content="$(\
+    curl -sL "${url}${word}" \
+  | xmllint --xpath "/api/query/pages/page/revisions/rev/slots/slot" - \
+  | xmllint --encode utf-8 -\
+)"
+
+# Redirect
+if (($ja_flag == 0)); then
+    redirect="REDIRECT"
+else
+    redirect="転送"
+fi
+
+if [[ "$(echo "${content}" | head -n 2 | grep ${redirect})" ]]; then
+    redirect_word="$(echo ${content} | sed -e "s/.*#${redirect} \[\[\(.*\)\]\].*/\1/g")"
+    echo -e "REDIRECT to \"${redirect_word}\""
+    content="$(\
+        curl -sL "${url}${redirect_word}" \
+      | xmllint --xpath "/api/query/pages/page/revisions/rev/slots/slot" - \
+      | xmllint --encode utf-8 -\
+   )"
+fi
+
+echo "${content}" \
+  | sed -e "s/&lt;/</g; s/&gt;/>/g" \
+  | grep "^'''" \
+  | head -n 1 \
+  | sed -e "s/'\{2,4\}\([^']*\)'\{2,4\}/\1/g" \
+  | sed -e "s/\[\[\([^]]*\)|\([^]]*\)\]\]/\2/g" \
+  | sed -e "s/\[\[\([^]]*\)#\([^]]*\)|\([^]]*\)\]\]/\3/g" \
+  | sed -e "s/\[\[\([^]]*\)\]\]/\1/g" \
+  | sed -e "s/{{[^|]*|\([^}]*\)}}/\1/g" \
+  | sed -e "s/ ({{.*}})//g" \
+  | perl -pe "s/<ref.*?<\/ref>//g" \
+  | perl -pe "s/<ref.*?\/>//g" \
+  | perl -pe "s/<!--.*?-->//g"

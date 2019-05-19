@@ -12,7 +12,7 @@ function usage() {
 url="https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=xml&titles="
 ja_flag=0
 
-for OPT in $*
+for OPT in "$@"
 do
     case $OPT in
         '-j' | '--japanese')
@@ -29,7 +29,7 @@ do
             exit 1
             ;;
         *)
-            word="$1"
+            word="${1// /_}"
             ;; 
     esac
     shift
@@ -57,7 +57,7 @@ if [[ "$(echo "${content}" | head -n 2 | grep ${redirect})" ]]; then
     redirect_word="$(echo ${content} | sed -e "s/.*#${redirect} \[\[\(.*\)\]\].*/\1/g")"
     echo -e "REDIRECT to \"${redirect_word}\""
     content="$(\
-        curl -sL "${url}${redirect_word}" \
+        curl -sL "${url}${redirect_word// /_}" \
       | xmllint --xpath "/api/query/pages/page/revisions/rev/slots/slot" - \
       | xmllint --encode utf-8 -\
    )"
@@ -75,4 +75,5 @@ echo "${content}" \
   | sed -e "s/ ({{.*}})//g" \
   | perl -pe "s/<ref.*?<\/ref>//g" \
   | perl -pe "s/<ref.*?\/>//g" \
-  | perl -pe "s/<!--.*?-->//g"
+  | perl -pe "s/<!--.*?-->//g" \
+  | perl -pe "s/ \([audio|pronounced|or].*?\)//g" 

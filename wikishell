@@ -81,5 +81,5 @@ echo "${content}" \
   | perl -pe "s/<ref.*?<\/ref>//g" \
   | perl -pe "s/<ref.*?\/>//g" \
   | perl -pe "s/<!--.*?-->//g" \
-  | perl -pe "s/ (audio|pronounced|or).*?//g"
+  | perl -pe "s/ \((audio|pronounced|or).*?\)//g"
 

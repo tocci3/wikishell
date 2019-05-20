@@ -71,7 +71,9 @@ done
 echo "${content}" \
   | sed -e "/{{生物分類表/,/^}}/d" \
   | sed -e "/{{基礎情報/,/^}}/d" \
-  | sed -e "s/&lt;/</g; s/&gt;/>/g" \
+  | sed -e "/{{Infobox/,/^}}/d" \
+  | sed -e "/{{ActorActress/,/^}}/d" \
+  | sed -e "s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g" \
   | grep "'''" \
   | head -n 1 \
   | sed -e "s/'\{2,4\}\([^']*\)'\{2,4\}/\1/g" \

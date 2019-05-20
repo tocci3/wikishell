@@ -30,7 +30,7 @@ do
             ;;
         *)
             word="${1// /_}"
-            ;; 
+            ;;
     esac
     shift
 done
@@ -49,23 +49,28 @@ content="$(\
 # Redirect
 if (($ja_flag == 0)); then
     redirect="REDIRECT"
+    redirect2="転送"
 else
     redirect="転送"
+    redirect2="REDIRECT"
 fi
 
-if [[ "$(echo "${content}" | head -n 2 | grep ${redirect})" ]]; then
-    redirect_word="$(echo ${content} | sed -e "s/.*#${redirect} \[\[\(.*\)\]\].*/\1/g")"
-    echo -e "REDIRECT to \"${redirect_word}\""
-    content="$(\
-        curl -sL "${url}${redirect_word// /_}" \
-      | xmllint --xpath "/api/query/pages/page/revisions/rev/slots/slot" - \
-      | xmllint --encode utf-8 -\
-   )"
-fi
+for rd in $redirect $redirect2 ;do
+    if [[ "$(echo "${content}" | head -n 2 | grep ${rd})" ]]; then
+        redirect_word="$(echo ${content} | sed -e "s/.*#${rd} *\[\[\(.*\)\]\].*/\1/g")"
+        echo -e "REDIRECT to \"${redirect_word}\""
+        content="$(\
+            curl -sL "${url}${redirect_word// /_}" \
+          | xmllint --xpath "/api/query/pages/page/revisions/rev/slots/slot" - \
+          | xmllint --encode utf-8 -\
+       )"
+      break
+    fi
+done
 
 echo "${content}" \
   | sed -e "s/&lt;/</g; s/&gt;/>/g" \
-  | grep "^'''" \
+  | grep "'''" \
   | head -n 1 \
   | sed -e "s/'\{2,4\}\([^']*\)'\{2,4\}/\1/g" \
   | sed -e "s/\[\[\([^]]*\)|\([^]]*\)\]\]/\2/g" \
@@ -76,4 +81,5 @@ echo "${content}" \
   | perl -pe "s/<ref.*?<\/ref>//g" \
   | perl -pe "s/<ref.*?\/>//g" \
   | perl -pe "s/<!--.*?-->//g" \
-  | perl -pe "s/ \([audio|pronounced|or].*?\)//g" 
+  | perl -pe "s/ (audio|pronounced|or).*?//g"
+

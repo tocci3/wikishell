@@ -69,6 +69,8 @@ for rd in $redirect $redirect2 ;do
 done
 
 echo "${content}" \
+  | sed -e "/{{生物分類表/,/^}}/d" \
+  | sed -e "/{{基礎情報/,/^}}/d" \
   | sed -e "s/&lt;/</g; s/&gt;/>/g" \
   | grep "'''" \
   | head -n 1 \

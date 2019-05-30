@@ -5,12 +5,13 @@ function usage() {
     echo -e "  $0 [Options] <word>"
     echo -e ""
     echo -e "Options:"
-    echo -e "  -j, --japanese   use japanese api"
+    echo -e "  -j, --japanese   use japanese api (default)"
+    echo -e "  -e, --english    use english api"
     echo -e "  -h, --help       display help"
 }
 
-url="https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=xml&titles="
-ja_flag=0
+url="https://ja.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=xml&titles="
+ja_flag=1
 
 for OPT in "$@"
 do
@@ -18,6 +19,10 @@ do
         '-j' | '--japanese')
             url="https://ja.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=xml&titles="
             ja_flag=1
+            ;;
+        '-e' | '--english')
+            url="https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=xml&titles="
+            ja_flag=0
             ;;
         '-h' | '--help')
             usage

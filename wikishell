@@ -45,6 +45,7 @@ if [[ -z "$word" ]]; then
     exit 1
 fi
 
+last_word="$word"
 content="$(\
     curl -sL "${url}${word}" \
   | xmllint --xpath "/api/query/pages/page/revisions/rev/slots/slot" - \
@@ -62,8 +63,10 @@ fi
 
 for rd in $redirect $redirect2 ;do
     if [[ "$(echo "${content}" | head -n 2 | grep ${rd})" ]]; then
-        redirect_word="$(echo ${content} | sed -e "s/.*#${rd} *\[\[\(.*\)\]\].*/\1/g")"
+        #redirect_word="$(echo ${content} | sed -e "s/.*#${rd} *\[\[\(.*\)\]\].*/\1/g")"
+        redirect_word="$(echo ${content} | sed -e "s/.*#${rd} *\[\[\([^]]*\)\]\].*/\1/g")"
         echo -e "REDIRECT to \"${redirect_word}\""
+        last_word="$redirect_word"
         content="$(\
             curl -sL "${url}${redirect_word// /_}" \
           | xmllint --xpath "/api/query/pages/page/revisions/rev/slots/slot" - \
@@ -90,5 +93,10 @@ echo "${content}" \
   | perl -pe "s/<ref.*?<\/ref>//g" \
   | perl -pe "s/<ref.*?\/>//g" \
   | perl -pe "s/<!--.*?-->//g" \
+  | perl -pe "s/<.*>//g" \
   | perl -pe "s/ \((audio|pronounced|or).*?\)//g"
-
+if (($ja_flag == 0)); then
+  echo "https://en.wikipedia.org/wiki/$last_word" |sed 's/ /_/g'
+else
+  echo "https://ja.wikipedia.org/wiki/$last_word" |sed 's/ /_/g'
+fi

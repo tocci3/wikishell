@@ -63,7 +63,6 @@ fi
 
 for rd in $redirect $redirect2 ;do
     if [[ "$(echo "${content}" | head -n 2 | grep ${rd})" ]]; then
-        #redirect_word="$(echo ${content} | sed -e "s/.*#${rd} *\[\[\(.*\)\]\].*/\1/g")"
         redirect_word="$(echo ${content} | sed -e "s/.*#${rd} *\[\[\([^]]*\)\]\].*/\1/g")"
         echo -e "REDIRECT to \"${redirect_word}\""
         last_word="$redirect_word"
